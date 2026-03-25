@@ -25,12 +25,25 @@ jobs:
     - name: Esperar servicios
       run: sleep 10
 
-    - name: Verificar app via nginx
-      run: curl -f http://localhost:80/health
+    - name: Verificar ping
+      run: curl -f http://localhost:80/ping
+
+    - name: Verificar health
+      run: |
+        curl -f http://localhost:80/health
+        echo "Health check details:"
+        curl -s http://localhost:80/health | python3 -m json.tool
 
     - name: Mostrar estado de contenedores
       run: docker compose ps
 
-    - name: Mostrar logs de app
-      if: always()
-      run: docker compose logs app --tail=50
+    - name: Verificar logs de app
+      run: docker compose logs app --tail=30
+
+    - name: Mostrar logs completos si falla
+      if: failure()
+      run: |
+        echo "=== APP LOGS ==="
+        docker compose logs app
+        echo "=== NGINX LOGS ==="
+        docker compose logs nginx

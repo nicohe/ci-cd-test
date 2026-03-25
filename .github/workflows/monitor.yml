@@ -1,0 +1,46 @@
+name: Monitor App
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'  # Cada 30 minutos
+  workflow_dispatch:
+
+jobs:
+  monitor-local:
+    runs-on: self-hosted
+    if: runner.environment == 'self-hosted'
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    - name: Verificar servicios Docker
+      run: docker compose ps
+    
+    - name: Ejecutar script de monitoreo
+      run: ./scripts/check-app.sh
+    
+    - name: Verificar logs de la app
+      run: docker compose logs app --tail=20
+    
+    - name: Verificar logs de nginx
+      run: docker compose logs nginx --tail=10
+
+  monitor-health:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Health Check Local (si está disponible)
+      run: |
+        if curl -f http://localhost:80/health 2>/dev/null; then
+          echo "✅ App local está funcionando"
+          curl -s http://localhost:80/health | python3 -m json.tool
+        else
+          echo "⚠️  App local no disponible (esto es normal si no hay self-hosted runner)"
+        fi
+      continue-on-error: true
+    
+    - name: Timestamp del monitoreo
+      run: |
+        echo "🕐 Monitoreo ejecutado: $(date)"
+        echo "✅ Workflow de monitoreo completado"
