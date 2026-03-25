@@ -23,7 +23,8 @@ def test_suma(client):
 
 def test_saludo(client):
     r = client.get('/saludo/Rox')
-    assert '¡Hola Rox!' in r.get_data(as_text=True)
+    data = json.loads(r.data)
+    assert data['saludo'] == '¡Hola Rox!'
 
 def test_multiplicar(): assert multiplicar(2, 3) == 6
 def test_es_par(): assert es_par(4)
