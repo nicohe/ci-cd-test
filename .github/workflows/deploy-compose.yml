@@ -1,0 +1,36 @@
+name: Deploy con Docker Compose
+
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+    - name: Checkout código
+      uses: actions/checkout@v4
+
+    - name: Parar servicios anteriores
+      run: docker compose down -v || true
+
+    - name: Construir servicios
+      run: docker compose -f docker-compose.yml build
+
+    - name: Levantar servicios
+      run: docker compose -f docker-compose.yml up -d
+
+    - name: Esperar servicios
+      run: sleep 10
+
+    - name: Verificar app via nginx
+      run: curl -f http://localhost:80/health
+
+    - name: Mostrar estado de contenedores
+      run: docker compose ps
+
+    - name: Mostrar logs de app
+      if: always()
+      run: docker compose logs app --tail=50
